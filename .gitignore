@@ -33,6 +33,9 @@ Thumbs.db
 # Streamlit
 .streamlit/
 
+# Local dev-tool config (references machine-specific paths, e.g. venv location)
+.claude/
+
 # Project-specific outputs
 generated-images/
 *.wav
