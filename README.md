@@ -327,8 +327,14 @@ python -m spacy download en_core_web_sm
 ```
 
 > **Note:** if `openai-whisper` fails to build with a `pkg_resources`/`ModuleNotFoundError`
-> during install, first run `pip install "setuptools<81" wheel`, then re-run
-> `pip install -r requirements.txt`.
+> during install, it's because pip builds each package in an isolated environment that doesn't
+> see your venv's own packages — so simply having `setuptools<81` installed in the venv isn't
+> enough. Force it to use your venv's setuptools instead, then continue:
+> ```bash
+> pip install "setuptools<81" wheel
+> pip install --no-build-isolation "openai-whisper==20231117"
+> pip install -r requirements.txt
+> ```
 
 ### 8.3 Run the interactive web app
 
