@@ -5,8 +5,7 @@ import sys
 
 # Ensure src modules can be imported
 sys.path.append(os.path.abspath("src"))
-from src.orchestrator import MultiAgentFusionOrchestrator
-from src import ui_theme
+from src import ui_theme, analysis_worker
 
 st.set_page_config(
     page_title="ReadOrSpeak | AI-Assisted Interview Detection",
@@ -15,6 +14,16 @@ st.set_page_config(
 )
 
 ui_theme.inject_theme()
+
+
+@st.cache_resource
+def get_analysis_worker() -> analysis_worker.AnalysisWorker:
+    """One AnalysisWorker (and its one background thread) for the whole
+    app's lifetime, shared across every session — see src/analysis_worker.py
+    for why this has to be a single persistent thread rather than one
+    spawned per request."""
+    return analysis_worker.AnalysisWorker()
+
 
 if "view" not in st.session_state:
     st.session_state.view = "empty"
@@ -28,11 +37,11 @@ if "video_size_mb" not in st.session_state:
     st.session_state.video_size_mb = 0.0
 
 # ---- Header row: brand (left) + Analysis/Upload tabs (right), one row ----
-header_col, tabs_col = st.columns([3, 2])
+header_col, tabs_col = st.columns([3, 2], gap="large")
 with header_col:
     ui_theme.render_brand()
 with tabs_col:
-    t1, t2 = st.columns(2)
+    t1, t2 = st.columns(2, gap="medium")
     with t1:
         if st.button(
             "Analysis",
@@ -102,9 +111,39 @@ with upload_box:
             tfile.write(file_bytes)
             temp_video_path = tfile.name
 
-        with st.spinner("Executing Vision, Audio, and Linguistic Agents..."):
-            orchestrator = MultiAgentFusionOrchestrator()
-            report = orchestrator.process_video_interview(temp_video_path)
+        flow_placeholder = st.empty()
+        pipeline_state = {"completed": set(), "current": None}
+
+        def _render_flow():
+            flow_placeholder.html(
+                ui_theme.render_pipeline_html(pipeline_state["completed"], pipeline_state["current"])
+            )
+
+        def on_progress(message):
+            pipeline_state["completed"], pipeline_state["current"] = ui_theme.pipeline_stage_update(
+                message, pipeline_state["completed"], pipeline_state["current"]
+            )
+            _render_flow()
+            status.write(message)
+
+        _render_flow()
+        with st.status("Running Multi-Agent Analysis...", expanded=True) as status:
+            # Analysis always runs on the single shared background worker
+            # thread (see src/analysis_worker.py) — never directly on this
+            # Streamlit session's own thread. All the st.* calls above and
+            # below still happen here, on the session thread, which is
+            # required for them to reach the right browser tab; only the
+            # actual ML work is handed off.
+            job = get_analysis_worker().submit(temp_video_path)
+            analysis_worker.drain_progress(job, on_progress)
+            if job.error:
+                raise job.error
+            report = job.result
+            status.update(
+                label=f"Analysis complete — {report['final_verdict']}",
+                state="complete",
+                expanded=False,
+            )
 
         st.session_state.report = report
         st.session_state.video_path = temp_video_path
@@ -123,7 +162,7 @@ with results_box:
     if report is None:
         st.markdown(
             f"""
-            <div class="ros-card" style="text-align:center;padding:48px 24px;">
+            <div class="ros-card" style="text-align:center;padding:var(--ros-space-4) var(--ros-space-3);">
               {ui_theme.icon('donut_large', 40, 'var(--color-neutral-600)')}
               <div style="font-size:16px;font-weight:600;margin-top:14px;">No analysis yet</div>
               <div style="font-size:13px;color:var(--color-neutral-500);margin-top:6px;">Switch to the Upload tab, choose a video, and run the multi-agent analysis.</div>
@@ -141,7 +180,7 @@ with results_box:
             unsafe_allow_html=True,
         )
 
-        left, right = st.columns([1, 1.55], gap="medium")
+        left, right = st.columns([1, 1.55], gap="large")
 
         with left:
             ui_theme.render_source_card_open(
@@ -149,21 +188,21 @@ with results_box:
             )
             if st.session_state.video_path and os.path.exists(st.session_state.video_path):
                 st.video(st.session_state.video_path)
-            st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='height:var(--ros-space-4)'></div>", unsafe_allow_html=True)
             ui_theme.render_risk_meter(int(report["confidence_score"].rstrip("%")))
 
         with right:
             ui_theme.render_verdict_banner(
                 report["final_verdict"], int(report["confidence_score"].rstrip("%"))
             )
-            st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='height:var(--ros-space-4)'></div>", unsafe_allow_html=True)
             ui_theme.render_agent_gauges(
                 report["agent_findings"]["vision"],
                 report["agent_findings"]["audio"],
                 report["agent_findings"]["linguistics"],
             )
-            st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-            tcol, ccol = st.columns(2, gap="medium")
+            st.markdown("<div style='height:var(--ros-space-4)'></div>", unsafe_allow_html=True)
+            tcol, ccol = st.columns(2, gap="large")
             with tcol:
                 ui_theme.render_timeline(report)
             with ccol:
