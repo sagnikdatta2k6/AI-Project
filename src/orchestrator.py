@@ -1,6 +1,6 @@
 import os
 import json
-from moviepy import VideoFileClip
+from moviepy.editor import VideoFileClip
 from agents import VisionAgent, AudioAgent, LinguisticAgent
 
 class MultiAgentFusionOrchestrator:

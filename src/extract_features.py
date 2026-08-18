@@ -4,12 +4,7 @@ import numpy as np
 import pandas as pd
 import librosa
 import mediapipe as mp
-
-# Safe MoviePy import across versions
-try:
-    from moviepy import VideoFileClip
-except ImportError:
-    from moviepy.editor import VideoFileClip
+from moviepy.editor import VideoFileClip
 
 # Initialize MediaPipe Face Mesh
 mp_face_mesh = mp.solutions.face_mesh

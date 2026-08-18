@@ -3,7 +3,6 @@ import cv2
 import numpy as np
 import librosa
 import mediapipe as mp
-from mediapipe import solutions
 import whisper
 import spacy
 
