@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Environment variables / secrets
+.env
+.env.*
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors / IDEs
+.vscode/
+.idea/
+
+# Streamlit
+.streamlit/
+
+# Project-specific outputs
+generated-images/
+*.wav
+temp_audio.wav
+temp_orchestrator_audio.wav
+feature_importance.png
+
+# Model / cache artifacts
+*.pt
+*.pth
+.cache/
