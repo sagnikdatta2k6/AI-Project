@@ -346,6 +346,19 @@ This opens a browser tab (default `http://localhost:8501`). Upload an `.mp4`/`.m
 interview clip in the sidebar and click **"Run Multi-Agent Analysis"** to see the live verdict,
 per-agent metrics, and transcript.
 
+> **macOS note:** if this fails with `SSLCertVerificationError` / `self-signed certificate in
+> certificate chain` while Whisper downloads its model checkpoint, it's because the official
+> python.org installer (unlike Homebrew's Python) doesn't wire itself up to the system's trusted
+> CA certificates. Fix it by running the certificate-install script that ships with your Python:
+> ```bash
+> /Applications/Python\ 3.12/Install\ Certificates.command
+> ```
+> If that file doesn't exist for your install, this works as a portable fallback instead:
+> ```bash
+> pip install --upgrade certifi
+> export SSL_CERT_FILE=$(python -m certifi)   # add to ~/.zshrc to persist across sessions
+> ```
+
 ### 8.4 (Optional) Run the offline training pipeline
 
 ```bash
