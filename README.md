@@ -44,7 +44,7 @@ this project.
              │  VisionAgent  ││  AudioAgent   ││  LinguisticAgent    │
              │ (MediaPipe    ││ (Librosa      ││ (Whisper ASR +      │
              │  Face Mesh)   ││  DSP)         ││  spaCy NLP)         │
-             └───────┬───────┘└───────┬───────┘└───────────┬──────────┘
+             └───────┬───────┘└───────┬───────┘└──────────┬──────────┘
                      │                │                    │
                      ▼                ▼                    ▼
               gaze variance     pause ratio,           transcript,
