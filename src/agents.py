@@ -1,4 +1,5 @@
 import os
+import threading
 import cv2
 import numpy as np
 import librosa
@@ -8,6 +9,17 @@ import spacy
 
 nlp = spacy.load("en_core_web_sm")
 whisper_model = whisper.load_model("tiny")  # Lightweight, fast ASR
+
+# Streamlit runs each browser session's script rerun in its own thread within
+# one shared process, but whisper_model/nlp above are module-level singletons
+# (loaded once so repeated requests don't pay model-load cost every time).
+# Calling whisper's/spaCy's inference concurrently from multiple threads on
+# the same model instance is not safe — two overlapping analyses can corrupt
+# each other's internal tensor state (observed: a shape-mismatch
+# RuntimeError immediately followed by a segfault). This lock serializes
+# access so concurrent users queue for their turn here instead of crashing
+# the whole process for everyone.
+_nlp_model_lock = threading.Lock()
 
 # --- AGENT 1: VISION AGENT ---
 class VisionAgent:
@@ -79,11 +91,12 @@ class LinguisticAgent:
         if not os.path.exists(audio_path):
             return {"transcript": "", "filler_ratio": 0.0, "text_verdict": "No audio"}
         
-        # Whisper Transcription
-        result = whisper_model.transcribe(audio_path)
-        transcript = result.get("text", "").strip()
-
-        doc = nlp(transcript.lower())
+        # Whisper Transcription + spaCy parsing share module-level singleton
+        # models — serialize access (see _nlp_model_lock definition above).
+        with _nlp_model_lock:
+            result = whisper_model.transcribe(audio_path)
+            transcript = result.get("text", "").strip()
+            doc = nlp(transcript.lower())
         tokens = [token.text for token in doc if not token.is_punct]
         filler_words = {"um", "uh", "like", "you know", "actually", "basically", "so"}
         
