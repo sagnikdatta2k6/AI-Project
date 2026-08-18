@@ -34,28 +34,28 @@ this project.
 ## 2. System Architecture
 
 ```
-                         ┌─────────────────────────┐
+                         ┌──────────────────────────┐
                          │   Uploaded Video (.mp4)  │
                          └────────────┬─────────────┘
                                       │
                      ┌────────────────┼────────────────┐
                      ▼                ▼                ▼
-             ┌───────────────┐┌───────────────┐┌────────────────────┐
+             ┌───────────────┐┌───────────────┐┌─────────────────────┐
              │  VisionAgent  ││  AudioAgent   ││  LinguisticAgent    │
              │ (MediaPipe    ││ (Librosa      ││ (Whisper ASR +      │
              │  Face Mesh)   ││  DSP)         ││  spaCy NLP)         │
-             └───────┬───────┘└───────┬───────┘└──────────┬──────────┘
+             └───────┬───────┘└───────┬───────┘└───────────┬──────────┘
                      │                │                    │
                      ▼                ▼                    ▼
-              gaze variance     pause ratio,          transcript,
+              gaze variance     pause ratio,           transcript,
               (suspicious?)     pitch std              filler ratio
                      │          (suspicious?)          (suspicious?)
                      └────────────────┼────────────────────┘
                                       ▼
-                      ┌───────────────────────────────┐
+                      ┌────────────────────────────────┐
                       │  MultiAgentFusionOrchestrator  │
                       │  (weighted rule-based voting)  │
-                      └───────────────┬─────────────────┘
+                      └───────────────┬────────────────┘
                                       ▼
                     Final verdict + confidence score (%) 
                     + natural-language explanation
