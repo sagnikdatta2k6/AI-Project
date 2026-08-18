@@ -264,10 +264,46 @@ AI-Project/
 
 ### 8.2 Set up the environment
 
+**Get Python 3.12 first.** `python -m venv` uses whatever interpreter you invoke it with, so if
+your system's default `python`/`python3` is a different version (3.13+ isn't supported by
+mediapipe yet; older versions may hit other dependency mismatches), install 3.12 specifically
+before creating the venv:
+
+- **Windows:**
+  - Check what's already installed: `py -0` lists every Python version the launcher knows about.
+  - If 3.12 isn't listed, install it with `winget install Python.Python.3.12` (or download the
+    installer from [python.org/downloads](https://www.python.org/downloads/)), then reopen your
+    terminal.
+  - Create the venv with that specific version via the `py` launcher:
+    ```bash
+    py -3.12 -m venv venv
+    ```
+    (If `py` isn't available, use the full interpreter path instead, e.g.
+    `"C:\Users\<you>\AppData\Local\Programs\Python\Python312\python.exe" -m venv venv`.)
+
+- **macOS:**
+  ```bash
+  brew install python@3.12
+  python3.12 -m venv venv
+  ```
+
+- **Linux (Debian/Ubuntu):**
+  ```bash
+  sudo apt update
+  sudo apt install python3.12 python3.12-venv
+  python3.12 -m venv venv
+  ```
+  (If `python3.12` isn't in your distro's default repos yet, add the
+  [deadsnakes PPA](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa) first:
+  `sudo add-apt-repository ppa:deadsnakes/ppa && sudo apt update`.)
+
+Once `venv/` exists, confirm it picked up the right version:
+
 ```bash
-# from the project root
-python -m venv venv
+venv/Scripts/python.exe --version   # Windows
+venv/bin/python --version           # macOS / Linux
 ```
+should print `Python 3.12.x`.
 
 Activate it:
 
